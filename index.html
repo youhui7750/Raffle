@@ -1,47 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>抽獎小程式</title>
-  <script src="index.js"></script>
-  <style>
-    body { font-family: Arial; padding: 20px; background: #f9f9f9; }
-    button { margin: 5px; padding: 10px; font-size: 16px; }
-    #output { margin-top: 20px; font-size: 20px; }
-  </style>
-</head>
-<body>
-  <h1>抽獎小程式</h1>
-  <button onclick="assignNumbers()">分配號碼</button>
-  <button onclick="drawNumber()">抽獎！</button>
-  <div id="output"></div>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Raffle</title>
+  </head>
+  <body>
+    <button onclick="assignNumbers()">分配號碼</button>
+    <button onclick="drawNumber()">抽獎</button>
+    <p id="output"></p>
 
-  <script>
-    var assign_numbers, get_number, draw_number;
+    <!-- 請確保這行是在 body 最底部 -->
+    <script src="index.js"></script>
+    
+    <script>
+      // 等待 Emscripten 的 Module 加載完成後再呼叫 C 函式
+      var Module = {
+        onRuntimeInitialized: function () {
+          // 使用 cwrap 將 C 函式轉成 JS 可呼叫的形式
+          window.assign_numbers = Module.cwrap("assign_numbers", null, []);
+          window.draw_number = Module.cwrap("draw_number", "number", []);
+          
+          // 當按鈕點擊時使用這些函式
+          window.assignNumbers = function () {
+            assign_numbers();
+            document.getElementById("output").innerText = "號碼已分配！";
+          }
 
-    // 等待 wasm 初始化
-    var Module = {
-      onRuntimeInitialized: () => {
-        assign_numbers = Module.cwrap('assign_numbers', null, []);
-        get_number = Module.cwrap('get_number', 'number', ['number']);
-        draw_number = Module.cwrap('draw_number', 'number', []);
-      }
-    };
-
-    function assignNumbers() {
-      assign_numbers();
-      const output = document.getElementById('output');
-      output.innerHTML = "三人號碼分配：<br>";
-      for (let i = 0; i < 3; i++) {
-        output.innerHTML += `玩家 ${i + 1} 號碼：${get_number(i)}<br>`;
-      }
-    }
-
-    function drawNumber() {
-      const winner = draw_number();
-      const output = document.getElementById('output');
-      output.innerHTML += `<br>🎉 中獎的是玩家 ${winner + 1}！`;
-    }
-  </script>
-</body>
+          window.drawNumber = function () {
+            var number = draw_number();
+            document.getElementById("output").innerText = "抽中的號碼是：" + number;
+          }
+        }
+      };
+    </script>
+  </body>
 </html>
