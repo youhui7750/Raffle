@@ -1,22 +1,26 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
+    <meta charset="utf-8" />
     <title>🎯 抽獎小程式</title>
     <style>
       body {
         font-family: Arial, sans-serif;
         text-align: center;
-        color: #003366; /* 深藍色字體 */
+        color: #003366;
       }
       #loading {
         font-size: 18px;
-        color: #555; /* 灰色 */
+        color: #555;
       }
       #playerList {
         margin-top: 10px;
         text-align: left;
         display: inline-block;
+      }
+      #output {
+        font-weight: bold;
+        margin-top: 15px;
       }
     </style>
   </head>
@@ -26,42 +30,43 @@
 
     <button id="btnAssign" onclick="assignNumbers()" disabled>分配號碼</button>
     <button id="btnDraw" onclick="drawNumber()" disabled>抽獎</button>
-    <p id="output"></p>
-    <div id="playerList"></div>
 
-    <!-- 必須在 index.js 之前定義 Module -->
+    <div id="playerList"></div>
+    <p id="output"></p>
+
     <script>
       var Module = {
         onRuntimeInitialized: function () {
-          // 對應 C++ 函式
+          window.init_rand = Module.cwrap("init_rand", null, []);
           window.assign_numbers = Module.cwrap("assign_numbers", null, []);
-          window.draw_number = Module.cwrap("draw_number", "number", []);
           window.get_player_count = Module.cwrap("get_player_count", "number", []);
           window.get_player_name = Module.cwrap("get_player_name", "string", ["number"]);
           window.get_player_number = Module.cwrap("get_player_number", "number", ["number"]);
+          window.draw_number = Module.cwrap("draw_number", "number", []);
 
-          // 分配號碼
+          init_rand();
+
           window.assignNumbers = function () {
             assign_numbers();
+
             let count = get_player_count();
             let listHtml = "<h3>玩家名單</h3><ul>";
             for (let i = 0; i < count; i++) {
-              let name = get_player_name(i);
-              let num = get_player_number(i);
+              const name = get_player_name(i);
+              const num = get_player_number(i);
               listHtml += `<li>${name} ➡️ 號碼 ${num}</li>`;
             }
             listHtml += "</ul>";
+
             document.getElementById("playerList").innerHTML = listHtml;
             document.getElementById("output").innerText = "號碼已分配！";
           };
 
-          // 抽獎
           window.drawNumber = function () {
-            let number = draw_number();
-            document.getElementById("output").innerText = "抽中的號碼是：" + number;
+            const number = draw_number();
+            document.getElementById("output").innerText = `🎉 抽中的號碼是：${number}`;
           };
 
-          // 啟用按鈕 & 移除載入提示
           document.getElementById("btnAssign").disabled = false;
           document.getElementById("btnDraw").disabled = false;
           document.getElementById("loading").style.display = "none";
@@ -69,7 +74,6 @@
       };
     </script>
 
-    <!-- 一定要放在 Module 宣告之後 -->
     <script src="index.js"></script>
   </body>
 </html>
