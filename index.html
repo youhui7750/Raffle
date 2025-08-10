@@ -7,10 +7,11 @@
       body {
         font-family: Arial, sans-serif;
         text-align: center;
+        color: #003366; /* 深藍色字體 */
       }
       #loading {
         font-size: 18px;
-        color: #555;
+        color: #555; /* 灰色 */
       }
       #playerList {
         margin-top: 10px;
@@ -28,10 +29,11 @@
     <p id="output"></p>
     <div id="playerList"></div>
 
+    <!-- 必須在 index.js 之前定義 Module -->
     <script>
       var Module = {
         onRuntimeInitialized: function () {
-          // 對應 C++ 的函式
+          // 對應 C++ 函式
           window.assign_numbers = Module.cwrap("assign_numbers", null, []);
           window.draw_number = Module.cwrap("draw_number", "number", []);
           window.get_player_count = Module.cwrap("get_player_count", "number", []);
@@ -67,6 +69,7 @@
       };
     </script>
 
+    <!-- 一定要放在 Module 宣告之後 -->
     <script src="index.js"></script>
   </body>
 </html>
