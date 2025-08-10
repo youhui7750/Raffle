@@ -2,38 +2,86 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Raffle</title>
+    <title>抽獎小程式</title>
     <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+      }
       #loading {
         font-size: 18px;
         color: #555;
       }
+      #playerList {
+        margin-top: 10px;
+        text-align: left;
+        display: inline-block;
+      }
+      #output {
+        font-size: 20px;
+        font-weight: bold;
+        margin-top: 20px;
+        min-height: 30px;
+      }
     </style>
   </head>
   <body>
+    <h1>🎯 抽獎小程式</h1>
     <div id="loading">載入中... 請稍候</div>
 
     <button id="btnAssign" onclick="assignNumbers()" disabled>分配號碼</button>
     <button id="btnDraw" onclick="drawNumber()" disabled>抽獎</button>
+
     <p id="output"></p>
+    <div id="playerList"></div>
 
     <!-- 先定義 Module，確保 Emscripten 初始化時能找到 -->
     <script>
       var Module = {
         onRuntimeInitialized: function () {
-          // 使用 cwrap 將 C 函式轉成 JS 可呼叫的形式
+          // 包裝 C++ 函式
           window.assign_numbers = Module.cwrap("assign_numbers", null, []);
           window.draw_number = Module.cwrap("draw_number", "number", []);
+          window.get_player_name = Module.cwrap("get_player_name", "string", ["number"]);
+          window.get_player_number = Module.cwrap("get_player_number", "number", ["number"]);
+          window.get_player_count = Module.cwrap("get_player_count", "number", []);
+          window.get_winner_name = Module.cwrap("get_winner_name", "string", ["number"]);
 
-          // 設定按鈕功能
+          // 分配號碼
           window.assignNumbers = function () {
             assign_numbers();
+
+            let count = get_player_count();
+            let listHtml = "<h3>玩家名單</h3><ul>";
+            for (let i = 0; i < count; i++) {
+              let name = get_player_name(i);
+              let num = get_player_number(i);
+              listHtml += `<li>${name} ➡️ 號碼 ${num}</li>`;
+            }
+            listHtml += "</ul>";
+            document.getElementById("playerList").innerHTML = listHtml;
             document.getElementById("output").innerText = "號碼已分配！";
           };
 
+          // 抽獎（加動畫）
           window.drawNumber = function () {
-            var number = draw_number();
-            document.getElementById("output").innerText = "抽中的號碼是：" + number;
+            let count = get_player_count();
+            let output = document.getElementById("output");
+
+            let interval = setInterval(() => {
+              let randomIndex = Math.floor(Math.random() * count);
+              let tempName = get_player_name(randomIndex);
+              let tempNum = get_player_number(randomIndex);
+              output.innerText = `抽中的號碼是 ${tempNum}（${tempName}）`;
+            }, 100); // 每 0.1 秒換一次
+
+            // 2 秒後停下來，顯示真正的中獎結果
+            setTimeout(() => {
+              clearInterval(interval);
+              let number = draw_number();
+              let winner = get_winner_name(number);
+              output.innerText = `🎉 抽中的號碼是 ${number}（${winner}）`;
+            }, 2000);
           };
 
           // 啟用按鈕 & 移除載入提示
