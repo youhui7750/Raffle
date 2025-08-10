@@ -3,35 +3,48 @@
   <head>
     <meta charset="utf-8">
     <title>Raffle</title>
+    <style>
+      #loading {
+        font-size: 18px;
+        color: #555;
+      }
+    </style>
   </head>
   <body>
-    <button onclick="assignNumbers()">分配號碼</button>
-    <button onclick="drawNumber()">抽獎</button>
+    <div id="loading">載入中... 請稍候</div>
+
+    <button id="btnAssign" onclick="assignNumbers()" disabled>分配號碼</button>
+    <button id="btnDraw" onclick="drawNumber()" disabled>抽獎</button>
     <p id="output"></p>
 
-    <!-- 請確保這行是在 body 最底部 -->
-    <script src="index.js"></script>
-    
+    <!-- 先定義 Module，確保 Emscripten 初始化時能找到 -->
     <script>
-      // 等待 Emscripten 的 Module 加載完成後再呼叫 C 函式
       var Module = {
         onRuntimeInitialized: function () {
           // 使用 cwrap 將 C 函式轉成 JS 可呼叫的形式
           window.assign_numbers = Module.cwrap("assign_numbers", null, []);
           window.draw_number = Module.cwrap("draw_number", "number", []);
-          
-          // 當按鈕點擊時使用這些函式
+
+          // 設定按鈕功能
           window.assignNumbers = function () {
             assign_numbers();
             document.getElementById("output").innerText = "號碼已分配！";
-          }
+          };
 
           window.drawNumber = function () {
             var number = draw_number();
             document.getElementById("output").innerText = "抽中的號碼是：" + number;
-          }
+          };
+
+          // 啟用按鈕 & 移除載入提示
+          document.getElementById("btnAssign").disabled = false;
+          document.getElementById("btnDraw").disabled = false;
+          document.getElementById("loading").style.display = "none";
         }
       };
     </script>
+
+    <!-- 必須放在 Module 宣告之後 -->
+    <script src="index.js"></script>
   </body>
 </html>
